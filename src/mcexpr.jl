@@ -4,7 +4,7 @@ export +, -, *
 export mcvx_begin, mcvx_end, minimize, maximize
 export @mcvx
 export resolve, @resolve
-export solver_coorddesc
+export solver_coorddesc, solver_newton
 export init_zero, init_randn
 
 #########################################################
@@ -399,9 +399,9 @@ function solver_coorddesc(niters :: Int64, step_size :: Float64)
   end
 end
 
-function mcvx_solver_newton(objective :: MCExpr, niters :: Int64, alpha :: Float64)
+function mcvx_solver_newton(niters :: Int64, alpha :: Float64)
   # differentiate with respect to all the variables
-  obj_derivs = [deriv(objective, EVar(i, "")) for i = 1:problem_size]
+  obj_derivs = [deriv(problem_obj, EVar(i, "")) for i = 1:problem_size]
   obj_2nddiffs = [deriv(obj_derivs[i], EVar(i, "")) for i = 1:problem_size]
   # initialize the state
   for iter = 1:niters
