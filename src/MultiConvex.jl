@@ -1,5 +1,5 @@
 module MultiConvex
 
-# package code goes here
+include("mcexpr.jl")
 
 end # module
