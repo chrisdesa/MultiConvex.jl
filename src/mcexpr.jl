@@ -1,5 +1,5 @@
 export MCExpr
-export var, @var, show
+export var, @var, show, zero
 export +, -, *
 export mcvx_begin, mcvx_end, minimize, maximize
 export @mcvx
@@ -204,7 +204,8 @@ end
 # lifting constants to MCExpr types
 #########################################################
 
-typealias IntOrFloat Union(Float64, Int64)
+typealias IntOrFloat Union(Float64, Int64, Array{Float64}, Array{Int64})
+typealias MCArrExpr Union(MCExpr, Array{MCExpr})
 
 function reify(x :: Int64)
   return EConst(float64(x))
@@ -214,27 +215,38 @@ function reify(x :: Float64)
   return EConst(x)
 end
 
-function +(x :: IntOrFloat, y :: MCExpr)
+function reify(x :: Array{Int64})
+  return convert(Array{MCExpr}, map(z -> EConst(float64(z)), x))
+end
+
+function reify(x :: Array{Float64})
+  return convert(Array{MCExpr}, map(z -> EConst(z), x))
+end
+
+import Base.zero
+zero(::Type{MCExpr}) = reify(0.0)
+
+function +(x :: IntOrFloat, y :: MCArrExpr)
   return reify(x) + y
 end
 
-function +(x :: MCExpr, y :: IntOrFloat)
+function +(x :: MCArrExpr, y :: IntOrFloat)
   return x + reify(y)
 end
 
-function -(x :: IntOrFloat, y :: MCExpr)
+function -(x :: IntOrFloat, y :: MCArrExpr)
   return x + (-y)
 end
 
-function -(x :: MCExpr, y :: IntOrFloat)
+function -(x :: MCArrExpr, y :: IntOrFloat)
   return x + (-y)
 end
 
-function *(x :: IntOrFloat, y :: MCExpr)
+function *(x :: IntOrFloat, y :: MCArrExpr)
   return reify(x) * y
 end
 
-function *(x :: MCExpr, y :: IntOrFloat)
+function *(x :: MCArrExpr, y :: IntOrFloat)
   return x * reify(y)
 end
 
@@ -327,6 +339,8 @@ function mcvx_end()
     # default solver
     solver_coorddesc(1000, 0.01)
   end
+  # print a message
+  println("solving problem with $problem_size variables")
   # initialize the problem variable
   problem_init()
   # solve the problem
@@ -379,7 +393,7 @@ end
 function mcvx_solver_coorddesc(niters :: Int64, step_size :: Float64)
   # differentiate with respect to all the variables
   obj_derivs = [deriv(problem_obj, EVar(i, "")) for i = 1:problem_size]
-  # initialize the state
+  # solve iteratively
   for iter = 1:niters
     for iv = 1:problem_size
       problem_var[iv] -= step_size * mceval(obj_derivs[iv], problem_var)
