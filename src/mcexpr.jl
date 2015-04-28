@@ -14,7 +14,7 @@ export init_zero, init_randn
 #########################################################
 
 abstract MCExpr
-abstract MCFun
+abstract EApp <: MCExpr
 
 immutable EVar <: MCExpr
   idx  :: Int64
@@ -37,11 +37,6 @@ end
 immutable ETimes <: MCExpr
   x    :: MCExpr
   y    :: MCExpr
-end
-
-immutable EApp <: MCExpr
-  f    :: MCFun
-  x    :: MCExpr
 end
 
 #########################################################
