@@ -1,3 +1,5 @@
+import Base.var
+
 export MCExpr
 export var, @var, show, zero
 export +, -, *
